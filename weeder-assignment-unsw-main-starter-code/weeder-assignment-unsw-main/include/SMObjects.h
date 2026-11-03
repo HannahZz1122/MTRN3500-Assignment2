@@ -26,6 +26,7 @@ using namespace System::Diagnostics;
 // You should change this based on what processes are and are not critical
 constexpr uint8_t NONCRITICALMASK = 0xff;
 constexpr uint8_t CRITICALMASK =    0x00;
+constexpr uint32_t CRASH_LIMIT = 1000;
 
 constexpr uint8_t bit_ALL =             0b01111111;
 constexpr uint8_t bit_TM =              0b00000001;
@@ -90,4 +91,17 @@ public:
     SM_VehicleControl() {
         lockObject = gcnew Object();
     }
+};
+
+enum error_state
+{
+    SUCCESS,
+    ERR_STARTUP,
+    ERR_NO_DATA,
+    ERR_INVALID_DATA,
+    ERR_SM,
+    ERR_CONNECTION,
+    ERR_CRITICAL_THREAD_FAILURE,
+    ERR_NONCRITICAL_THREAD_FAILURE,
+    ERR_TMT_FAILURE,
 };

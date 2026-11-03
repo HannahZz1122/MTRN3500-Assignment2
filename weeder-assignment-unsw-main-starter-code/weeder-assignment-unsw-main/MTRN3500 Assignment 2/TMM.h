@@ -1,24 +1,33 @@
+
 #pragma once
 
-#include <UGVModule.h>
+#include "UGVModule.h"
+#include "SMObjects.h"
 
-ref class ThreadManagement : public UGVModule {
+using namespace System;
+using namespace System::Threading;
+using namespace System::Diagnostics;
+
+ref class ThreadManagement : public UGVModule
+{
 public:
-    // Create shared memory objects
+    ThreadManagement(SM_ThreadManagement^ SM_TM);
+
+    // Create and initialise shared memory
     error_state setupSharedMemory();
 
-    // Send/Recieve data from shared memory structures
-    error_state processSharedMemory() override;
+    // Process heartbeat information
+    virtual error_state processSharedMemory() override;
 
-    // Shutdown all modules in the software
+    // Shutdown all modules
     void shutdownModules();
 
-    // Get Shutdown signal for module, from Thread Management SM
-    bool getShutdownFlag() override;
+    // Check shutdown flag
+    virtual bool getShutdownFlag() override;
 
-    // Thread function for TMM
-    void threadFunction() override;
+    // Main thread function
+    virtual void threadFunction() override;
 
 private:
-    // Add any additional data members or helper functions here
+    Stopwatch^ TM_Stopwatch;
 };
