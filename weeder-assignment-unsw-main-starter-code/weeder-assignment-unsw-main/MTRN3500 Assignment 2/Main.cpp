@@ -6,9 +6,14 @@
 #include "SMObjects.h"
 #include "GNSS.h"
 #include "Controller.h"
+#include "VC.h"
 
 using namespace System;
 using namespace System::Threading;
+
+// Replace with the actual port
+const int LASER_PORT = 23000;
+const int VC_PORT = 25000;
 
 int main(array<String^>^ args)
 {
@@ -27,7 +32,7 @@ int main(array<String^>^ args)
     SM_VehicleControl^ vehicleData = 
         gcnew SM_VehicleControl();
     // Create barrier for TMM and Laser
-    SM_TM->ThreadBarrier = gcnew Barrier(4);
+    SM_TM->ThreadBarrier = gcnew Barrier(5);
 
     // Create modules
     ThreadManagement^ TMM =
@@ -41,6 +46,9 @@ int main(array<String^>^ args)
 
     Controller^ controllerModule = 
         gcnew Controller(SM_TM, vehicleData, true);
+
+	VehicleControl^ VCModule =
+		gcnew VehicleControl(SM_TM, vehicleData);
     // Initialise shared memory before threads start
     if (TMM->setupSharedMemory() != SUCCESS ||
         LaserModule->setupShareMemory() != SUCCESS ||
@@ -54,9 +62,6 @@ int main(array<String^>^ args)
     }
 
     // Connect LiDAR before starting threads
-    // Replace LASER_PORT with the actual port
-    const int LASER_PORT = 23000;
-
     if (LaserModule->connect(
         gcnew String(WEEDER_ADDRESS),
         LASER_PORT) != SUCCESS)
@@ -68,6 +73,14 @@ int main(array<String^>^ args)
         return 1;
     }
 
+	// Connect GNSS before starting threads
+    const int VC_PORT = 25000;
+
+    if (VCModule->connect(gcnew String(WEEDER_ADDRESS), VC_PORT) != SUCCESS)
+    {
+        Console::WriteLine("Vehicle Control connection failed");
+        return 1;
+    }
     // Create TMM thread
     Thread^ TMMThread =
         gcnew Thread(
@@ -99,11 +112,18 @@ int main(array<String^>^ args)
     Thread^ controllerThread = gcnew Thread(
         gcnew ThreadStart(controllerModule, &Controller::threadFunction)
     );
+
+	// Create Vehicle Control thread
+    Thread^ vehicleThread = gcnew Thread(
+        gcnew ThreadStart(VCModule, &VehicleControl::threadFunction)
+    );
+
     // Start threads
     TMMThread->Start();
     LaserThread->Start();
     gpsThread->Start();
     controllerThread->Start();
+    vehicleThread->Start();
 
     Console::WriteLine("UGV threads started");
     Console::WriteLine("Press 'q' to shutdown");
@@ -122,6 +142,9 @@ int main(array<String^>^ args)
 
 	// Wait for Controller to terminate
 	controllerThread->Join();
+
+	// Wait for Vehicle Control to terminate
+	vehicleThread->Join();
 	// controllerModule is not a managed object, so we need to delete it manually
     delete controllerModule;
     Console::WriteLine("All threads terminated");

@@ -206,9 +206,6 @@ error_state Laser::connect(String^ hostName,
         String^ id = "5539653";
         array<Byte>^ authBytes = Encoding::ASCII->GetBytes(id + "\n");
         Stream->Write(authBytes, 0, authBytes->Length);
-
-        Console::WriteLine("ID length: {0}, auth bytes sent: {1}",
-            id->Length, authBytes->Length);
         StringBuilder^ authReply = gcnew StringBuilder();
 
         while (true)
