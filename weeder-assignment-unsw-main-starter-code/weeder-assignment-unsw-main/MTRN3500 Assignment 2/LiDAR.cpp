@@ -201,36 +201,43 @@ error_state Laser::connect(String^ hostName,
         Stream->ReadTimeout = 1000;
         Stream->WriteTimeout = 1000;
 
+		//Authentication for LiDAR
+        sendCommand("5539653\n");
+        String^ response = readTelegram();
+        if (!response->StartsWith("OK"))
+            throw gcnew IOException(
+                "Authentication failed"
+            );
+
         // Start measurement
         sendCommand("sMN LMCstartmeas");
-        String^ response = readTelegram();
-
+        response = readTelegram();
         if (!response->StartsWith("sAN LMCstartmeas"))
             throw gcnew IOException(
                 "Start measurement not acknowledged"
             );
 
         // Configure scanning
-        sendCommand(
-            "sMN mLMPsetscancfg +5000 +1 +5000 0 +1800000"
-        );
+        //sendCommand(
+        //    "sMN mLMPsetscancfg +5000 +1 +5000 0 +1800000"
+        //);
 
-        response = readTelegram();
+        //response = readTelegram();
 
-        if (!response->StartsWith("sAN mLMPsetscancfg"))
-            throw gcnew IOException(
-                "Scan configuration not acknowledged"
-            );
+        //if (!response->StartsWith("sAN mLMPsetscancfg"))
+        //    throw gcnew IOException(
+        //        "Scan configuration not acknowledged"
+        //    );
 
         // Enable scan output
-        sendCommand("sEN LMDscandata 1");
+        sendCommand("sRN LMDscandata 1");
 
-        response = readTelegram();
+        //response = readTelegram();
 
-        if (!response->StartsWith("sEA LMDscandata"))
-            throw gcnew IOException(
-                "Scan output not acknowledged"
-            );
+        //if (!response->StartsWith("sEA LMDscandata"))
+        //    throw gcnew IOException(
+        //        "Scan output not acknowledged"
+        //    );
 
         Console::WriteLine("LiDAR TCP connected");
 

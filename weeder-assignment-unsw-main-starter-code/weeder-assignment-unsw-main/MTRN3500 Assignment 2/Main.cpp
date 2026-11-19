@@ -2,7 +2,7 @@
 #using <System.dll>
 
 #include "TMM.h"
-#include "Laser.h"
+#include "LiDAR.h"
 #include "SMObjects.h"
 
 using namespace System;

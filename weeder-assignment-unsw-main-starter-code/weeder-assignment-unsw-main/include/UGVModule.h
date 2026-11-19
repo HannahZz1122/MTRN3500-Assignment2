@@ -15,18 +15,18 @@ For clarification of inheritance requirements see diagram in the assignment spec
 #include <SMObjects.h>
 
 // ERROR HANDLING. Use this as the return value in your functions
-enum error_state {
-	SUCCESS,
-	ERR_STARTUP,
-	ERR_NO_DATA,
-	ERR_INVALID_DATA,
-	ERR_SM,
-	ERR_CONNECTION,
-	ERR_CRITICAL_THREAD_FAILURE,
-	ERR_NONCRITICAL_THREAD_FAILURE,
-	ERR_TMT_FAILURE,
-	// Define your own additional error types as needed
-};
+//enum error_state {
+//	SUCCESS,
+//	ERR_STARTUP,
+//	ERR_NO_DATA,
+//	ERR_INVALID_DATA,
+//	ERR_SM,
+//	ERR_CONNECTION,
+//	ERR_CRITICAL_THREAD_FAILURE,
+//	ERR_NONCRITICAL_THREAD_FAILURE,
+//	ERR_TMT_FAILURE,
+//	// Define your own additional error types as needed
+//};
 
 ref class UGVModule abstract
 {
