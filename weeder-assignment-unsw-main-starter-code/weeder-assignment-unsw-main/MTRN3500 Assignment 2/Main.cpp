@@ -4,6 +4,7 @@
 #include "TMM.h"
 #include "LiDAR.h"
 #include "SMObjects.h"
+#include "GNSS.h"
 
 using namespace System;
 using namespace System::Threading;
@@ -19,8 +20,10 @@ int main(array<String^>^ args)
     SM_Laser^ SM_LaserData =
         gcnew SM_Laser();
 
+    SM_GPS^ gpsData = 
+        gcnew SM_GPS();
     // Create barrier for TMM and Laser
-    SM_TM->ThreadBarrier = gcnew Barrier(2);
+    SM_TM->ThreadBarrier = gcnew Barrier(3);
 
     // Create modules
     ThreadManagement^ TMM =
@@ -29,9 +32,12 @@ int main(array<String^>^ args)
     Laser^ LaserModule =
         gcnew Laser(SM_TM, SM_LaserData);
 
+    GPS^ gpsModule = 
+        gcnew GPS(SM_TM, gpsData);
     // Initialise shared memory before threads start
     if (TMM->setupSharedMemory() != SUCCESS ||
-        LaserModule->setupShareMemory() != SUCCESS)
+        LaserModule->setupShareMemory() != SUCCESS ||
+        gpsModule->setupShareMemory() != SUCCESS)
     {
         Console::WriteLine(
             "Shared memory initialisation failed"
@@ -73,9 +79,19 @@ int main(array<String^>^ args)
             )
         );
 
+	// Create GPS thread
+    Thread^ gpsThread = 
+        gcnew Thread(
+            gcnew ThreadStart(
+                gpsModule,
+                &GPS::threadFunction
+            )
+    );
+
     // Start threads
     TMMThread->Start();
     LaserThread->Start();
+    gpsThread->Start();
 
     Console::WriteLine("UGV threads started");
     Console::WriteLine("Press 'q' to shutdown");
@@ -88,6 +104,9 @@ int main(array<String^>^ args)
 
     // Wait for Laser to terminate
     LaserThread->Join();
+
+    // Wait for GPS to terminate
+    gpsThread->Join();
 
     Console::WriteLine("All threads terminated");
     Console::WriteLine("UGV System Shutdown Complete");

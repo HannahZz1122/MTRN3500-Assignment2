@@ -159,7 +159,6 @@ String^ Laser::readTelegram()
     do
     {
         data = Stream->ReadByte();
-
         if (data == -1)
             throw gcnew IOException("Connection closed");
 
@@ -171,7 +170,9 @@ String^ Laser::readTelegram()
         data = Stream->ReadByte();
 
         if (data == -1)
-            throw gcnew IOException("Connection closed");
+            throw gcnew IOException(
+                String::Format("EOF before ETX, payload bytes received: {0}",
+                    message->Length));
 
         if (data == 0x03)
             break;
@@ -181,7 +182,7 @@ String^ Laser::readTelegram()
         if (message->Length > 32768)
             throw gcnew IOException("Telegram too large");
     }
-
+    Console::WriteLine("Complete LiDAR frame: {0} payload bytes", message->Length);
     return message->ToString();
 }
 
@@ -202,20 +203,42 @@ error_state Laser::connect(String^ hostName,
         Stream->WriteTimeout = 1000;
 
 		//Authentication for LiDAR
-        sendCommand("5539653\n");
-        String^ response = readTelegram();
+        String^ id = "5539653";
+        array<Byte>^ authBytes = Encoding::ASCII->GetBytes(id + "\n");
+        Stream->Write(authBytes, 0, authBytes->Length);
+
+        Console::WriteLine("ID length: {0}, auth bytes sent: {1}",
+            id->Length, authBytes->Length);
+        StringBuilder^ authReply = gcnew StringBuilder();
+
+        while (true)
+        {
+            int value = Stream->ReadByte();
+
+            if (value == -1)
+                throw gcnew IOException("Connection closed while reading auth reply");
+
+            if (value == '\n')
+                break;
+
+            authReply->Append(static_cast<wchar_t>(value));
+        }
+
+        String^ response = authReply->ToString()->Trim();
         if (!response->StartsWith("OK"))
             throw gcnew IOException(
                 "Authentication failed"
             );
-
+        Console::WriteLine("Auth OK in client");
         // Start measurement
-        sendCommand("sMN LMCstartmeas");
-        response = readTelegram();
-        if (!response->StartsWith("sAN LMCstartmeas"))
-            throw gcnew IOException(
-                "Start measurement not acknowledged"
-            );
+        //sendCommand("sMN LMCstartmeas");
+        //Console::WriteLine("Sent LMCstartmeas");
+        //response = readTelegram();
+        //Console::WriteLine("Measurement reply: [{0}]", response);
+        //if (!response->StartsWith("sAN LMCstartmeas"))
+        //    throw gcnew IOException(
+        //        "Start measurement not acknowledged"
+        //    );
 
         // Configure scanning
         //sendCommand(
@@ -229,8 +252,7 @@ error_state Laser::connect(String^ hostName,
         //        "Scan configuration not acknowledged"
         //    );
 
-        // Enable scan output
-        sendCommand("sRN LMDscandata 1");
+       
 
         //response = readTelegram();
 
@@ -273,7 +295,8 @@ error_state Laser::communicate()
     try
     {
         String^ LMDscandata = nullptr;
-
+        // Enable scan output
+        sendCommand("sRN LMDscandata");
         // Receive one scan telegram
         for (int attempt = 0; attempt < 10; attempt++)
         {
@@ -331,7 +354,7 @@ error_state Laser::communicate()
             Convert::ToInt32(
                 StringArray[index + 5], 16
             );
-
+        Console::WriteLine("DIST1 point count: {0}", NumberData);
         if (NumberData != STANDARD_LASER_LENGTH)
             return ERR_INVALID_DATA;
 
@@ -382,8 +405,9 @@ error_state Laser::communicate()
 
         return SUCCESS;
     }
-    catch (IOException^)
+    catch (IOException^ ex)
     {
+        Console::WriteLine("LiDAR read error: {0}", ex->Message);
         return ERR_NO_DATA;
     }
     catch (Exception^ ex)
@@ -412,8 +436,8 @@ error_state Laser::checkData()
 error_state Laser::processSharedMemory()
 {
     // Print once per second
-    if (Laser_PrintStopwatch->ElapsedMilliseconds < 1000)
-        return SUCCESS;
+    //if (Laser_PrintStopwatch->ElapsedMilliseconds < 1000)
+    //    return SUCCESS;
 
     Laser_PrintStopwatch->Restart();
 

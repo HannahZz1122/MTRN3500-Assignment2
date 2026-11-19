@@ -1,27 +1,30 @@
 #pragma once
-#using <System.dll>
-#include "SMObjects.h"
 
-using namespace System;
-using namespace System::Threading;
-using namespace System::Diagnostics;
+#include "NetworkedModule.h"
 
-ref class GPS
+using namespace System::Collections::Generic;
+
+ref class GPS : public NetworkedModule
 {
 public:
-	GPS(SM_ThreadManagement^ SM_TM, SM_GPS^ SM_GPS);
+    GPS(SM_ThreadManagement^ threadMemory, SM_GPS^ gpsMemory);
 
-	error_state setupShareMemory();
-	void threadFunction();
-	error_state processHeartbeats();
-	void shutdownThreads();
-	bool getShutdownFlag();
-	error_state communicate();
-	error_state checkData();
-	error_state processSharedMemory();
+    error_state setupShareMemory();
+    error_state processHeartbeats();
+    error_state checkData();
+
+    virtual error_state connect(String^ hostName, int portNumber) override;
+    virtual error_state communicate() override;
+    virtual error_state processSharedMemory() override;
+    virtual bool getShutdownFlag() override;
+    virtual void threadFunction() override;
 
 private:
-	SM_ThreadManagement^ GPS_SM_TM_;
-	SM_GPS^ GPS_SM_GPS_;
-	Stopwatch^ GPS_Stopwatch;
+    SM_GPS^ gpsMemory_;
+    List<Byte>^ pending_;
+    array<Byte>^ frame_;
+    UInt32 receivedCRC_;
+    UInt32 calculatedCRC_;
+
+    bool takeFrame();
 };
