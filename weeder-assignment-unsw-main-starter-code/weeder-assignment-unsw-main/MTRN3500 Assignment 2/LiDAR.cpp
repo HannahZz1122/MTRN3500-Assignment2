@@ -435,9 +435,9 @@ error_state Laser::checkData()
 // Process Shared Memory and Print Data
 error_state Laser::processSharedMemory()
 {
-    // Print once per second
-    //if (Laser_PrintStopwatch->ElapsedMilliseconds < 1000)
-    //    return SUCCESS;
+    //Print once per second
+    if (Laser_PrintStopwatch->ElapsedMilliseconds < 1000)
+        return SUCCESS;
 
     Laser_PrintStopwatch->Restart();
 
