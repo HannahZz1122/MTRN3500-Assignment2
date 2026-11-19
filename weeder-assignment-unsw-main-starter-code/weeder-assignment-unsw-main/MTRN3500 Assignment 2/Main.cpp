@@ -27,7 +27,7 @@ int main(array<String^>^ args)
     SM_VehicleControl^ vehicleData = 
         gcnew SM_VehicleControl();
     // Create barrier for TMM and Laser
-    SM_TM->ThreadBarrier = gcnew Barrier(3);
+    SM_TM->ThreadBarrier = gcnew Barrier(4);
 
     // Create modules
     ThreadManagement^ TMM =

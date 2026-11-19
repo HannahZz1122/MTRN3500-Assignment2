@@ -2,12 +2,13 @@
 #pragma once
 
 #include "UGVModule.h"
-#include "ControllerInterface.h"
 #include "SMObjects.h"
 
 using namespace System;
 using namespace System::Threading;
 using namespace System::Diagnostics;
+
+class ControllerInterface;
 
 ref class Controller : public UGVModule
 {
