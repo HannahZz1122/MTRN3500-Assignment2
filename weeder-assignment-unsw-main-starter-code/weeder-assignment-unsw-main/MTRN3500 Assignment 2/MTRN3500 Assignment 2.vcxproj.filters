@@ -18,7 +18,7 @@
     <ClInclude Include="TMM.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\include\ControllerInterface.h">
+    <ClInclude Include="..\include\OldControllerInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\include\NetworkedModule.h">
@@ -46,6 +46,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CrashAvoidance.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ControllerInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -130,11 +130,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\ControllerInterface.h" />
+    <ClInclude Include="..\include\OldControllerInterface.h" />
     <ClInclude Include="..\include\NetworkedModule.h" />
     <ClInclude Include="..\include\SMObjects.h" />
     <ClInclude Include="..\include\UGVModule.h" />
     <ClInclude Include="Controller.h" />
+    <ClInclude Include="ControllerInterface.h" />
     <ClInclude Include="CrashAvoidance.h" />
     <ClInclude Include="Display.h" />
     <ClInclude Include="GNSS.h" />
