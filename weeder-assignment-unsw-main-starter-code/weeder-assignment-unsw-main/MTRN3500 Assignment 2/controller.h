@@ -12,8 +12,11 @@ using namespace System::Diagnostics;
 ref class Controller : public UGVModule
 {
 public:
-    Controller(SM_ThreadManagement^ SM_TM,
-        SM_VehicleControl^ SM_VC);
+    Controller(SM_ThreadManagement^ threadMemory,
+        SM_VehicleControl^ vehicleMemory,
+        bool useKeyboard);
+
+    ~Controller();
 
     virtual void threadFunction() override;
     virtual error_state processSharedMemory() override;
@@ -22,9 +25,11 @@ public:
     error_state processHeartbeats();
     void shutdownThreads();
 
+protected:
+    !Controller();
+
 private:
     SM_VehicleControl^ Controller_SM_VC_;
-    Stopwatch^ Controller_Stopwatch;
-
     ControllerInterface* Controller_Input_;
+    bool useKeyboard_;
 };

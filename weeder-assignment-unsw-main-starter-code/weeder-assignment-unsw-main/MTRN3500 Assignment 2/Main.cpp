@@ -5,6 +5,7 @@
 #include "LiDAR.h"
 #include "SMObjects.h"
 #include "GNSS.h"
+#include "Controller.h"
 
 using namespace System;
 using namespace System::Threading;
@@ -22,6 +23,9 @@ int main(array<String^>^ args)
 
     SM_GPS^ gpsData = 
         gcnew SM_GPS();
+
+    SM_VehicleControl^ vehicleData = 
+        gcnew SM_VehicleControl();
     // Create barrier for TMM and Laser
     SM_TM->ThreadBarrier = gcnew Barrier(3);
 
@@ -34,6 +38,9 @@ int main(array<String^>^ args)
 
     GPS^ gpsModule = 
         gcnew GPS(SM_TM, gpsData);
+
+    Controller^ controllerModule = 
+        gcnew Controller(SM_TM, vehicleData, true);
     // Initialise shared memory before threads start
     if (TMM->setupSharedMemory() != SUCCESS ||
         LaserModule->setupShareMemory() != SUCCESS ||
@@ -88,10 +95,15 @@ int main(array<String^>^ args)
             )
     );
 
+	// Create Controller thread
+    Thread^ controllerThread = gcnew Thread(
+        gcnew ThreadStart(controllerModule, &Controller::threadFunction)
+    );
     // Start threads
     TMMThread->Start();
     LaserThread->Start();
     gpsThread->Start();
+    controllerThread->Start();
 
     Console::WriteLine("UGV threads started");
     Console::WriteLine("Press 'q' to shutdown");
@@ -108,6 +120,10 @@ int main(array<String^>^ args)
     // Wait for GPS to terminate
     gpsThread->Join();
 
+	// Wait for Controller to terminate
+	controllerThread->Join();
+	// controllerModule is not a managed object, so we need to delete it manually
+    delete controllerModule;
     Console::WriteLine("All threads terminated");
     Console::WriteLine("UGV System Shutdown Complete");
 
