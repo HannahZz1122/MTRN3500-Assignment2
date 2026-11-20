@@ -60,7 +60,9 @@ error_state Controller::processSharedMemory()
     }
 
     // Keyboard mode fills rightThumbY; Xbox mode fills the triggers.
-    double speed = state.rightTrigger - state.leftTrigger;
+    double speed = useKeyboard_
+        ? state.rightThumbY
+        : state.rightTrigger - state.leftTrigger;
 
     double steering = state.rightThumbX * 40.0;
 

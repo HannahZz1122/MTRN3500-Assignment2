@@ -52,7 +52,8 @@ int main(array<String^>^ args)
     // Initialise shared memory before threads start
     if (TMM->setupSharedMemory() != SUCCESS ||
         LaserModule->setupShareMemory() != SUCCESS ||
-        gpsModule->setupShareMemory() != SUCCESS)
+        gpsModule->setupShareMemory() != SUCCESS
+        )
     {
         Console::WriteLine(
             "Shared memory initialisation failed"
@@ -73,9 +74,7 @@ int main(array<String^>^ args)
         return 1;
     }
 
-	// Connect GNSS before starting threads
-    const int VC_PORT = 25000;
-
+	// Connect Vehicle Control before starting threads
     if (VCModule->connect(gcnew String(WEEDER_ADDRESS), VC_PORT) != SUCCESS)
     {
         Console::WriteLine("Vehicle Control connection failed");

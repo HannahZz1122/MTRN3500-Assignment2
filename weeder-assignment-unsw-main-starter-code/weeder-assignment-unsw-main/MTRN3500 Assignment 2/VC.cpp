@@ -117,6 +117,7 @@ error_state VehicleControl::communicate()
     try
     {
         Stream->Write(bytes, 0, bytes->Length);
+        Console::WriteLine("VC TX: [{0}]", command);
         watchdog_ ^= 1;
         return SUCCESS;
     }
