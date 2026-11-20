@@ -79,7 +79,17 @@ int main(array<String^>^ args)
     }
 
 	// Connect Vehicle Control before starting threads
-    if (VCModule->connect(gcnew String(WEEDER_ADDRESS), VC_PORT) != SUCCESS)
+    String^ weederHost = gcnew String(WEEDER_ADDRESS);
+    error_state vcResult = VCModule->connect(weederHost, VC_PORT);
+
+    if (vcResult == ERR_CONNECTION_ABORTED)
+    {
+        Console::WriteLine("VC connection aborted. Retrying once...");
+        Thread::Sleep(300);
+        vcResult = VCModule->connect(weederHost, VC_PORT);
+    }
+
+    if (vcResult != SUCCESS)
     {
         Console::WriteLine("Vehicle Control connection failed");
         return 1;

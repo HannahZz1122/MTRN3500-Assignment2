@@ -69,8 +69,18 @@ error_state VehicleControl::connect(String^ hostName, int portNumber)
     }
     catch (Exception^ ex)
     {
-        Console::WriteLine("Vehicle Control connection error: {0}", ex->GetBaseException()->Message);
+        Exception^ cause = ex->GetBaseException();
+        SocketException^ socketError = dynamic_cast<SocketException^>(cause);
+
+        Console::WriteLine("Vehicle Control connection error: {0}", cause->Message);
         closeConnection();
+
+        if (socketError != nullptr &&
+            socketError->SocketErrorCode == SocketError::ConnectionAborted)
+        {
+            return ERR_CONNECTION_ABORTED;
+        }
+
         return ERR_CONNECTION;
     }
 }
@@ -117,7 +127,7 @@ error_state VehicleControl::communicate()
     try
     {
         Stream->Write(bytes, 0, bytes->Length);
-        Console::WriteLine("VC TX: [{0}]", command);
+        //Console::WriteLine("VC TX: [{0}]", command);
         watchdog_ ^= 1;
         return SUCCESS;
     }

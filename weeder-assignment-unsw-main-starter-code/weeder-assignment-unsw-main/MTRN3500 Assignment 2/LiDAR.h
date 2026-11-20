@@ -35,7 +35,7 @@ private:
 
     Stopwatch^ Laser_Stopwatch;
     Stopwatch^ Laser_PrintStopwatch;
-
+    String^ previousRanges_;
     String^ readTelegram();
     void sendCommand(String^ command);
 };

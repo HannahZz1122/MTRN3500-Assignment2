@@ -182,7 +182,7 @@ String^ Laser::readTelegram()
         if (message->Length > 32768)
             throw gcnew IOException("Telegram too large");
     }
-    Console::WriteLine("Complete LiDAR frame: {0} payload bytes", message->Length);
+    //Console::WriteLine("Complete LiDAR frame: {0} payload bytes", message->Length);
     return message->ToString();
 }
 
@@ -351,13 +351,29 @@ error_state Laser::communicate()
             Convert::ToInt32(
                 StringArray[index + 5], 16
             );
+        //
         Console::WriteLine("DIST1 point count: {0}", NumberData);
         if (NumberData != STANDARD_LASER_LENGTH)
             return ERR_INVALID_DATA;
 
         if (StringArray->Length < index + 6 + NumberData)
             return ERR_INVALID_DATA;
+        //////////
+        String^ currentRanges =
+            String::Join(" ", StringArray, index + 6, NumberData);
 
+        if (previousRanges_ == nullptr)
+        {
+            Console::WriteLine("First LiDAR DIST1 scan received");
+        }
+        else if (!String::Equals(currentRanges, previousRanges_,
+            StringComparison::Ordinal))
+        {
+            Console::WriteLine("Raw LiDAR DIST1 ranges changed");
+        }
+
+        previousRanges_ = currentRanges;
+        ////////
         array<double>^ RangeX =
             gcnew array<double>(NumberData);
 
@@ -464,16 +480,16 @@ error_state Laser::processSharedMemory()
         Monitor::Exit(Laser_SM_Laser_->lockObject);
     }
 
-    Console::WriteLine("\nLiDAR Data (361 Points)");
-    Console::WriteLine("Point\tX (m)\t\tY (m)");
+    //Console::WriteLine("\nLiDAR Data (361 Points)");
+    //Console::WriteLine("Point\tX (m)\t\tY (m)");
 
-    for (int i = 0; i < STANDARD_LASER_LENGTH; i++)
-    {
-        Console::WriteLine(
-            "{0}\t{1:F3}\t\t{2:F3}",
-            i, x[i], y[i]
-        );
-    }
+    //for (int i = 0; i < STANDARD_LASER_LENGTH; i++)
+    //{
+    //    Console::WriteLine(
+    //        "{0}\t{1:F3}\t\t{2:F3}",
+    //        i, x[i], y[i]
+    //    );
+    //}
 
     return SUCCESS;
 }
