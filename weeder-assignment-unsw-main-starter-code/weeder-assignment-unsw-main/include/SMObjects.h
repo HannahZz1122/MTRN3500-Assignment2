@@ -25,7 +25,7 @@ using namespace System::Diagnostics;
 // Ordering of processes in the mask should be based on the order in the UnitFlags type below.
 // You should change this based on what processes are and are not critical
 constexpr uint8_t NONCRITICALMASK = 0x04;
-constexpr uint8_t CRITICALMASK = 0x1B;
+constexpr uint8_t CRITICALMASK = 0x3B;
 constexpr uint32_t CRASH_LIMIT = 1000;
 
 constexpr uint8_t bit_ALL =             0b01111111;

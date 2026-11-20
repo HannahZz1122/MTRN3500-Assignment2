@@ -7,6 +7,7 @@
 #include "GNSS.h"
 #include "Controller.h"
 #include "VC.h"
+#include "Display.h"
 
 using namespace System;
 using namespace System::Threading;
@@ -32,7 +33,7 @@ int main(array<String^>^ args)
     SM_VehicleControl^ vehicleData = 
         gcnew SM_VehicleControl();
     // Create barrier for TMM and Laser
-    SM_TM->ThreadBarrier = gcnew Barrier(5);
+    SM_TM->ThreadBarrier = gcnew Barrier(6);
 
     // Create modules
     ThreadManagement^ TMM =
@@ -49,6 +50,9 @@ int main(array<String^>^ args)
 
 	VehicleControl^ VCModule =
 		gcnew VehicleControl(SM_TM, vehicleData);
+
+	Display^ displayModule =
+		gcnew Display(SM_TM, SM_LaserData);
     // Initialise shared memory before threads start
     if (TMM->setupSharedMemory() != SUCCESS ||
         LaserModule->setupShareMemory() != SUCCESS ||
@@ -80,6 +84,14 @@ int main(array<String^>^ args)
         Console::WriteLine("Vehicle Control connection failed");
         return 1;
     }
+
+	// Connect Display before starting threads
+    if (displayModule->connect(gcnew String(DISPLAY_ADDRESS), 28000) != SUCCESS)
+    {
+        Console::WriteLine("MATLAB Display connection failed");
+        return 1;
+    }
+
     // Create TMM thread
     Thread^ TMMThread =
         gcnew Thread(
@@ -117,12 +129,18 @@ int main(array<String^>^ args)
         gcnew ThreadStart(VCModule, &VehicleControl::threadFunction)
     );
 
+	// Create Display thread
+    Thread^ displayThread = gcnew Thread(
+        gcnew ThreadStart(displayModule, &Display::threadFunction)
+    );
+    
     // Start threads
     TMMThread->Start();
     LaserThread->Start();
     gpsThread->Start();
     controllerThread->Start();
     vehicleThread->Start();
+	displayThread->Start();
 
     Console::WriteLine("UGV threads started");
     Console::WriteLine("Press 'q' to shutdown");
@@ -144,6 +162,10 @@ int main(array<String^>^ args)
 
 	// Wait for Vehicle Control to terminate
 	vehicleThread->Join();
+
+	// Wait for Display to terminate
+	displayThread->Join();
+
 	// controllerModule is not a managed object, so we need to delete it manually
     delete controllerModule;
     Console::WriteLine("All threads terminated");
