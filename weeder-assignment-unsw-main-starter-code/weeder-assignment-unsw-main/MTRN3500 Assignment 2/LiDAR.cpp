@@ -160,7 +160,7 @@ String^ Laser::readTelegram()
     {
         data = Stream->ReadByte();
         if (data == -1)
-            throw gcnew IOException("Connection closed");
+            throw gcnew EndOfStreamException("LiDAR connection closed");
 
     } while (data != 0x02);
 
@@ -170,9 +170,7 @@ String^ Laser::readTelegram()
         data = Stream->ReadByte();
 
         if (data == -1)
-            throw gcnew IOException(
-                String::Format("EOF before ETX, payload bytes received: {0}",
-                    message->Length));
+            throw gcnew EndOfStreamException("LiDAR connection closed");
 
         if (data == 0x03)
             break;
@@ -180,7 +178,7 @@ String^ Laser::readTelegram()
         message->Append((wchar_t)data);
 
         if (message->Length > 32768)
-            throw gcnew IOException("Telegram too large");
+            throw gcnew InvalidDataException("Telegram too large");
     }
     //Console::WriteLine("Complete LiDAR frame: {0} payload bytes", message->Length);
     return message->ToString();
@@ -420,16 +418,22 @@ error_state Laser::communicate()
     }
     catch (IOException^ ex)
     {
-        Console::WriteLine("LiDAR read error: {0}", ex->Message);
-        return ERR_NO_DATA;
+        SocketException^ socketError =
+            dynamic_cast<SocketException^>(ex->GetBaseException());
+
+        if (socketError != nullptr &&
+            socketError->SocketErrorCode == SocketError::TimedOut)
+        {
+            Console::WriteLine("LiDAR TIMEOUT");
+            return ERR_CONNECTION_TIMEOUT;
+        }
+
+        Console::WriteLine("LiDAR CONNECTION ERROR: {0}", ex->Message);
+        return ERR_CONNECTION;
     }
     catch (Exception^ ex)
     {
-        Console::WriteLine(
-            "LiDAR data error: {0}",
-            ex->Message
-        );
-
+        Console::WriteLine("LiDAR DATA ERROR: {0}", ex->Message);
         return ERR_INVALID_DATA;
     }
 }
