@@ -159,6 +159,10 @@ error_state GPS::communicate()
     {
         SocketException^ socketError = dynamic_cast<SocketException^>(ex->InnerException);
         if (socketError != nullptr && socketError->SocketErrorCode == SocketError::TimedOut)
+            Console::WriteLine(
+                "[GNSS] Socket error: {0}",
+                socketError->SocketErrorCode
+            );
             return ERR_NO_DATA;
 
         Console::WriteLine("GNSS read error: {0}", ex->Message);

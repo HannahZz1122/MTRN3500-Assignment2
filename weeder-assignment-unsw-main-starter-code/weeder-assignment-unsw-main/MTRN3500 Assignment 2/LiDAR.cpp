@@ -350,7 +350,7 @@ error_state Laser::communicate()
                 StringArray[index + 5], 16
             );
         //
-        Console::WriteLine("DIST1 point count: {0}", NumberData);
+        //Console::WriteLine("DIST1 point count: {0}", NumberData);
         if (NumberData != STANDARD_LASER_LENGTH)
             return ERR_INVALID_DATA;
 
@@ -416,24 +416,38 @@ error_state Laser::communicate()
 
         return SUCCESS;
     }
+    catch (EndOfStreamException^ ex)
+    {
+        Console::WriteLine("[LiDAR] Connection closed: {0}", ex->Message);
+        return ERR_CONNECTION;
+    }
+    catch (InvalidDataException^ ex)
+    {
+        Console::WriteLine("[LiDAR] Invalid data: {0}", ex->Message);
+        return ERR_INVALID_DATA;
+    }
     catch (IOException^ ex)
     {
         SocketException^ socketError =
             dynamic_cast<SocketException^>(ex->GetBaseException());
 
-        if (socketError != nullptr &&
-            socketError->SocketErrorCode == SocketError::TimedOut)
+        if (socketError != nullptr)
         {
-            Console::WriteLine("LiDAR TIMEOUT");
-            return ERR_CONNECTION_TIMEOUT;
+            Console::WriteLine(
+                "[LiDAR] Socket error: {0}",
+                socketError->SocketErrorCode
+            );
+
+            if (socketError->SocketErrorCode == SocketError::TimedOut)
+                return ERR_CONNECTION_TIMEOUT;
         }
 
-        Console::WriteLine("LiDAR CONNECTION ERROR: {0}", ex->Message);
+        Console::WriteLine("[LiDAR] Connection error: {0}", ex->Message);
         return ERR_CONNECTION;
     }
     catch (Exception^ ex)
     {
-        Console::WriteLine("LiDAR DATA ERROR: {0}", ex->Message);
+        Console::WriteLine("[LiDAR] Unexpected error: {0}", ex->ToString());
         return ERR_INVALID_DATA;
     }
 }

@@ -80,7 +80,22 @@ error_state Display::communicate()
     }
     catch (IOException^ ex)
     {
-        Console::WriteLine("Display send error: {0}", ex->Message);
+        SocketException^ socketError =
+            dynamic_cast<SocketException^>(ex->GetBaseException());
+
+        if (socketError != nullptr)
+        {
+            Console::WriteLine(
+                "[Display] Socket error: {0}",
+                socketError->SocketErrorCode
+            );
+        }
+
+        Console::WriteLine(
+            "[Display] Send failed: {0}",
+            ex->Message
+        );
+
         return ERR_CONNECTION;
     }
 }
@@ -140,7 +155,7 @@ void Display::threadFunction()
                 break;
             }
             ++sentFrames;
-            if (sentFrames == 1 || sentFrames % 20 == 0)
+            //if (sentFrames == 1 || sentFrames % 20 == 0)
                 // Console::WriteLine("Display frames sent: {0}", sentFrames);
             processHeartbeats();
             Thread::Sleep(50);
