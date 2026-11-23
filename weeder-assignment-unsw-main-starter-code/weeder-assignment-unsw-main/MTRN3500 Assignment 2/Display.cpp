@@ -141,7 +141,7 @@ void Display::threadFunction()
             }
             ++sentFrames;
             if (sentFrames == 1 || sentFrames % 20 == 0)
-                Console::WriteLine("Display frames sent: {0}", sentFrames);
+                // Console::WriteLine("Display frames sent: {0}", sentFrames);
             processHeartbeats();
             Thread::Sleep(50);
         }
