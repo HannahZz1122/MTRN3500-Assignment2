@@ -53,7 +53,7 @@ error_state GPS::connect(String^ hostName, int portNumber)
             throw gcnew TimeoutException("TCP connection timed out");
 
         Stream = Client->GetStream();
-        Stream->ReadTimeout = 250;
+        Stream->ReadTimeout = 1000;
         pending_->Clear();
         Console::WriteLine("GNSS connected to {0}:{1}", hostName, portNumber);
         return SUCCESS;
@@ -157,15 +157,20 @@ error_state GPS::communicate()
     }
     catch (IOException^ ex)
     {
-        SocketException^ socketError = dynamic_cast<SocketException^>(ex->InnerException);
-        if (socketError != nullptr && socketError->SocketErrorCode == SocketError::TimedOut)
-            Console::WriteLine(
-                "[GNSS] Socket error: {0}",
-                socketError->SocketErrorCode
-            );
-            return ERR_NO_DATA;
+        SocketException^ socketError =
+            dynamic_cast<SocketException^>(ex->GetBaseException());
 
-        Console::WriteLine("GNSS read error: {0}", ex->Message);
+        if (socketError != nullptr &&
+            socketError->SocketErrorCode == SocketError::TimedOut)
+        {
+            return ERR_NO_DATA;
+        }
+
+        Console::WriteLine(
+            "[GNSS] Connection error: {0}",
+            ex->Message
+        );
+
         return ERR_CONNECTION;
     }
 }
