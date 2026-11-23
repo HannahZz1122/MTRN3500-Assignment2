@@ -13,6 +13,16 @@ ThreadManagement::ThreadManagement(
 {
     SM_TM_ = SM_TM;
     TM_Stopwatch = gcnew Stopwatch();
+    lastHeartbeat_ = gcnew array<Int64>(8);
+    heartbeatSeen_ = gcnew array<bool>(8);
+    failureReported_ = gcnew array<bool>(8);
+
+    activeModules_ =
+        bit_LASER |
+        bit_GPS |
+        bit_VC |
+        bit_CONTROLLER |
+        bit_DISPLAY;
 }
 
 
@@ -44,22 +54,81 @@ error_state ThreadManagement::processSharedMemory()
     if (SM_TM_ == nullptr)
         return ERR_SM;
 
-    Monitor::Enter(SM_TM_->lockObject);
+    uint8_t heartbeat = 0;
 
+    Monitor::Enter(SM_TM_->lockObject);
     try
     {
-        // Read heartbeats from all modules
-        uint8_t heartbeat = SM_TM_->heartbeat;
+        heartbeat = SM_TM_->heartbeat;
 
-        // Clear module heartbeats after processing
-        SM_TM_->heartbeat = 0;
-
-        // TM heartbeat
-        SM_TM_->heartbeat |= bit_TM;
+        // Clear old heartbeats
+        SM_TM_->heartbeat = bit_TM;
     }
     finally
     {
         Monitor::Exit(SM_TM_->lockObject);
+    }
+
+    Int64 now = TM_Stopwatch->ElapsedMilliseconds;
+
+    // Allow modules time to finish initial startup
+    const Int64 STARTUP_GRACE_MS = 3000;
+
+    for (int i = 0; i < 8; i++)
+    {
+        uint8_t moduleBit =
+            static_cast<uint8_t>(1 << i);
+
+        if ((activeModules_ & moduleBit) == 0)
+            continue;
+
+        bool received = (heartbeat & moduleBit) != 0;
+
+        if (received)
+        {
+            lastHeartbeat_[i] = now;
+            heartbeatSeen_[i] = true;
+
+            if (failureReported_[i])
+            {
+                Console::WriteLine(
+                    "[TMM] Heartbeat recovered: 0x{0:X2}",
+                    static_cast<int>(moduleBit));
+            }
+
+            failureReported_[i] = false;
+            continue;
+        }
+
+        // Give modules time to start and send their first heartbeat
+        if (!heartbeatSeen_[i] && now < STARTUP_GRACE_MS)
+            continue;
+
+        if (now - lastHeartbeat_[i] <= CRASH_LIMIT)
+            continue;
+
+        if (failureReported_[i])
+            continue;
+
+        failureReported_[i] = true;
+
+        // Critical thread failure
+        if ((moduleBit & CRITICALMASK) != 0)
+        {
+            Console::WriteLine(
+                "[TMM] Critical thread timeout: 0x{0:X2}",
+                static_cast<int>(moduleBit));
+
+            return ERR_CRITICAL_THREAD_FAILURE;
+        }
+
+        // Non-critical thread failure
+        if ((moduleBit & NONCRITICALMASK) != 0)
+        {
+            Console::WriteLine(
+                "[TMM] Non-critical thread timeout: 0x{0:X2}",
+                static_cast<int>(moduleBit));
+        }
     }
 
     return SUCCESS;
@@ -127,7 +196,7 @@ void ThreadManagement::threadFunction()
     // Wait for other modules
     SM_TM_->ThreadBarrier->SignalAndWait();
 
-    TM_Stopwatch->Start();
+    TM_Stopwatch->Restart();
 
     Console::WriteLine(
         "Thread Management Thread is running"
@@ -155,8 +224,16 @@ void ThreadManagement::threadFunction()
                 break;
             }
         }
-        processSharedMemory();
+        error_state result = processSharedMemory();
+        if (result == ERR_CRITICAL_THREAD_FAILURE ||
+            result == ERR_SM)
+        {
+            Console::WriteLine(
+                "[TMM] Failure detected. Requesting shutdown.");
 
+            shutdownModules();
+            break;
+        }
         // Prevent excessive CPU usage
         Thread::Sleep(20);
     }

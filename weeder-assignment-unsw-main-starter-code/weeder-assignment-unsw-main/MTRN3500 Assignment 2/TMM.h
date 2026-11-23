@@ -30,4 +30,15 @@ public:
 
 private:
     Stopwatch^ TM_Stopwatch;
+    // Last observed heartbeat time for each bit
+    array<Int64>^ lastHeartbeat_;
+
+    // Whether a heartbeat has been observed
+    array<bool>^ heartbeatSeen_;
+
+    // Prevent repeated failure messages
+    array<bool>^ failureReported_;
+
+    // Threads currently enabled
+    uint8_t activeModules_;
 };
