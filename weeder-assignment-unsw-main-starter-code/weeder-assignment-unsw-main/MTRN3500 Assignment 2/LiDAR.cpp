@@ -246,37 +246,6 @@ error_state Laser::connect(String^ hostName,
                 "Authentication failed"
             );
         Console::WriteLine("Auth OK in client");
-        // Start measurement
-        //sendCommand("sMN LMCstartmeas");
-        //Console::WriteLine("Sent LMCstartmeas");
-        //response = readTelegram();
-        //Console::WriteLine("Measurement reply: [{0}]", response);
-        //if (!response->StartsWith("sAN LMCstartmeas"))
-        //    throw gcnew IOException(
-        //        "Start measurement not acknowledged"
-        //    );
-
-        // Configure scanning
-        //sendCommand(
-        //    "sMN mLMPsetscancfg +5000 +1 +5000 0 +1800000"
-        //);
-
-        //response = readTelegram();
-
-        //if (!response->StartsWith("sAN mLMPsetscancfg"))
-        //    throw gcnew IOException(
-        //        "Scan configuration not acknowledged"
-        //    );
-
-       
-
-        //response = readTelegram();
-
-        //if (!response->StartsWith("sEA LMDscandata"))
-        //    throw gcnew IOException(
-        //        "Scan output not acknowledged"
-        //    );
-
         Console::WriteLine("LiDAR TCP connected");
 
         return SUCCESS;

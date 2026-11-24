@@ -194,8 +194,6 @@ int main(array<String^>^ args)
     delete controllerModule;
     Console::WriteLine("All threads terminated");
     Console::WriteLine("UGV System Shutdown Complete");
-    Console::WriteLine("Press any key to exit...");
-    Console::ReadKey(true);
 
     return 0;
 }

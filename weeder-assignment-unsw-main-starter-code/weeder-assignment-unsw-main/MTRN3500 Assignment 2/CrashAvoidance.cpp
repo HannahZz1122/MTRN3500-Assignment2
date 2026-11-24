@@ -5,17 +5,14 @@ using namespace System;
 using namespace System::Threading;
 using namespace System::Diagnostics;
 
-namespace
-{
-    // Simulation-only parameters, requiring validation
-    const double DETECTION_DISTANCE_M = 1.0;
-    const double FRONT_HALF_ANGLE_DEG = 25.0;
-    const double STEERING_SHIFT_FACTOR = 0.5;
-    const Int64 SCAN_TIMEOUT_TICKS =
-        1000LL * TimeSpan::TicksPerMillisecond;
+// Simulation-only parameters, requiring validation
+constexpr double DETECTION_DISTANCE_M = 1.0;
+constexpr double FRONT_HALF_ANGLE_DEG = 25.0;
+constexpr double STEERING_SHIFT_FACTOR = 0.5;
+constexpr Int64 SCAN_TIMEOUT_TICKS =
+    1000LL * TimeSpan::TicksPerMillisecond;
 
-    const int LOOP_INTERVAL_MS = 20;
-}
+constexpr int LOOP_INTERVAL_MS = 20;
 
 // Constructor
 CrashAvoidance::CrashAvoidance(
