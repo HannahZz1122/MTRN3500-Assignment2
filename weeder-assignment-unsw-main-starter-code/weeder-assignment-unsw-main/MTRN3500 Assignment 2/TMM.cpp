@@ -22,7 +22,8 @@ ThreadManagement::ThreadManagement(
         bit_GPS |
         bit_VC |
         bit_CONTROLLER |
-        bit_DISPLAY;
+        bit_DISPLAY |
+        bit_CRASHAVOIDANCE;
 }
 
 

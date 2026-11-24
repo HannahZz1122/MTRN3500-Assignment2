@@ -8,11 +8,11 @@
 #include "Controller.h"
 #include "VC.h"
 #include "Display.h"
+#include "CrashAvoidance.h"
 
 using namespace System;
 using namespace System::Threading;
 
-// Replace with the actual port
 const int LASER_PORT = 23000;
 const int VC_PORT = 25000;
 
@@ -32,8 +32,8 @@ int main(array<String^>^ args)
 
     SM_VehicleControl^ vehicleData = 
         gcnew SM_VehicleControl();
-    // Create barrier for TMM and Laser
-    SM_TM->ThreadBarrier = gcnew Barrier(6);
+    // Create barrier
+    SM_TM->ThreadBarrier = gcnew Barrier(7);
 
     // Create modules
     ThreadManagement^ TMM =
@@ -53,10 +53,15 @@ int main(array<String^>^ args)
 
 	Display^ displayModule =
 		gcnew Display(SM_TM, SM_LaserData);
+
+	CrashAvoidance^ crashAvoidanceModule =
+		gcnew CrashAvoidance(SM_TM, SM_LaserData, vehicleData);
+
     // Initialise shared memory before threads start
     if (TMM->setupSharedMemory() != SUCCESS ||
         LaserModule->setupShareMemory() != SUCCESS ||
-        gpsModule->setupShareMemory() != SUCCESS
+        gpsModule->setupShareMemory() != SUCCESS ||
+        crashAvoidanceModule->setupShareMemory() != SUCCESS
         )
     {
         Console::WriteLine(
@@ -143,6 +148,11 @@ int main(array<String^>^ args)
     Thread^ displayThread = gcnew Thread(
         gcnew ThreadStart(displayModule, &Display::threadFunction)
     );
+
+	// Create Crash Avoidance thread
+	Thread^ crashAvoidanceThread = gcnew Thread(
+		gcnew ThreadStart(crashAvoidanceModule, &CrashAvoidance::threadFunction)
+	);
     
     // Start threads
     TMMThread->Start();
@@ -151,6 +161,7 @@ int main(array<String^>^ args)
     controllerThread->Start();
     vehicleThread->Start();
 	displayThread->Start();
+	crashAvoidanceThread->Start();
 
     Console::WriteLine("UGV threads started");
     Console::WriteLine("Press 'q' to shutdown");
@@ -175,6 +186,9 @@ int main(array<String^>^ args)
 
 	// Wait for Display to terminate
 	displayThread->Join();
+
+	// Wait for Crash Avoidance to terminate
+	crashAvoidanceThread->Join();
 
 	// controllerModule is not a managed object, so we need to delete it manually
     delete controllerModule;

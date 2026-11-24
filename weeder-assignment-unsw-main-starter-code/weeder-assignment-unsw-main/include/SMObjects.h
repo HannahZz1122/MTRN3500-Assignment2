@@ -25,7 +25,7 @@ using namespace System::Diagnostics;
 // Ordering of processes in the mask should be based on the order in the UnitFlags type below.
 // You should change this based on what processes are and are not critical
 constexpr uint8_t NONCRITICALMASK = 0x04;
-constexpr uint8_t CRITICALMASK = 0x3B;
+constexpr uint8_t CRITICALMASK = 0x7B;
 constexpr uint32_t CRASH_LIMIT = 1000;
 
 constexpr uint8_t bit_ALL =             0b01111111;
@@ -54,6 +54,7 @@ public:
 // This is the size of the data recieved from the laser
 #define STANDARD_LASER_LENGTH 361
 
+
 ref class SM_Laser
 {
 public:
@@ -61,12 +62,24 @@ public:
     array<double>^ x;
     array<double>^ y;
 
-    SM_Laser() {
+    // Scan validity information
+    bool scanValid;
+    Int64 lastScanTicks;
+    UInt64 scanSequence;
+
+    SM_Laser()
+    {
         lockObject = gcnew Object();
+
         x = gcnew array<double>(STANDARD_LASER_LENGTH);
         y = gcnew array<double>(STANDARD_LASER_LENGTH);
+
+        scanValid = false;
+        lastScanTicks = 0;
+        scanSequence = 0;
     }
 };
+
 
 ref class SM_GPS
 {
@@ -81,17 +94,33 @@ public:
     }
 };
 
+
 ref class SM_VehicleControl
 {
 public:
     Object^ lockObject;
+
+    // Raw Controller commands
     double Speed;
     double Steering;
 
-    SM_VehicleControl() {
+    // Crash Avoidance status
+    bool MotionInhibited;
+    bool AvoidanceReady;
+
+    SM_VehicleControl()
+    {
         lockObject = gcnew Object();
+
+        Speed = 0.0;
+        Steering = 0.0;
+
+        // Unknown safety state at startup
+        MotionInhibited = true;
+        AvoidanceReady = false;
     }
 };
+
 
 enum error_state
 {

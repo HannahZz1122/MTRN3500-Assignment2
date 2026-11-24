@@ -87,11 +87,21 @@ error_state VehicleControl::connect(String^ hostName, int portNumber)
 
 error_state VehicleControl::processSharedMemory()
 {
+    if (VC_SM_VC_ == nullptr)
+        return ERR_SM;
+
     Monitor::Enter(VC_SM_VC_->lockObject);
     try
     {
         Speed_ = VC_SM_VC_->Speed;
         Steering_ = VC_SM_VC_->Steering;
+
+        if (!VC_SM_VC_->AvoidanceReady ||
+            VC_SM_VC_->MotionInhibited)
+        {
+            Speed_ = 0.0;
+            Steering_ = 0.0;
+        }
     }
     finally
     {

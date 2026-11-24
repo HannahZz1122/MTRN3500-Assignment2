@@ -54,8 +54,29 @@ void Laser::threadFunction()
             break;
 
         // LiDAR communication
-        if (communicate() == SUCCESS &&
-            checkData() == SUCCESS)
+        error_state result = communicate();
+
+        if (result == ERR_CONNECTION)
+        {
+            // Mark the old scan as unavailable.
+            Monitor::Enter(Laser_SM_Laser_->lockObject);
+            try
+            {
+                Laser_SM_Laser_->scanValid = false;
+            }
+            finally
+            {
+                Monitor::Exit(Laser_SM_Laser_->lockObject);
+            }
+
+            Console::WriteLine(
+                "[LiDAR] Connection lost.");
+
+            shutdownThreads();
+            break;
+        }
+
+        if (result == SUCCESS && checkData() == SUCCESS)
         {
             processSharedMemory();
         }
@@ -408,6 +429,13 @@ error_state Laser::communicate()
                 Laser_SM_Laser_->x[i] = RangeX[i];
                 Laser_SM_Laser_->y[i] = RangeY[i];
             }
+            // Update only after a complete valid scan
+            Laser_SM_Laser_->scanValid = true;
+
+            Laser_SM_Laser_->lastScanTicks =
+                DateTime::UtcNow.Ticks;
+
+            Laser_SM_Laser_->scanSequence++;
         }
         finally
         {
